@@ -1,0 +1,322 @@
+<html>
+<head>
+<title>The windy garden - MahJong hands</title>
+<style type=text/css>
+
+.Card, .HandName
+{
+	display:	block;
+	float:		left;
+	margin:		10px;
+	padding:	5px;
+	width:		80px;
+	height:		120px;
+	border:		solid #000 1px;
+	text-align:	center;
+	overflow:	hidden;
+}
+
+.HandName
+{
+	border:		none;
+}
+
+.Card
+{
+	cursor:	hand;
+}
+
+.Card img
+{
+	margin:	10px;
+}
+
+.Hand:after
+{
+	content:	'';
+	display:	block;
+	clear:		both;
+}
+
+</style>
+</head>
+<body>
+
+
+<h2>Your Hand</h2>
+<div id=Player>
+</div>
+
+<h2>Matching Hands</h2>
+<div id=Matches>
+</div>
+
+<script>
+
+	//	load this from config
+	var CardImageUrlPrefix = "https://upload.wikimedia.org/wikipedia/commons/";
+	var CardImageUrlSuffix = ".png";
+	var CardImageUrl = function(Filename)	{	return CardImageUrlPrefix + Filename + CardImageUrlSuffix;	};
+	https://en.wikipedia.org/wiki/File:MJt1.png
+	//	unicode
+	//	https://en.wikipedia.org/wiki/Mahjong_Tiles_(Unicode_block)
+	//	&#x1F001;
+	
+	var CardTypes = [];
+	CardTypes['null']	= {	'Label':"?",		'ImageUrl':null	};
+	CardTypes['Empty']	= {	'Label':"Empty",		'ImageUrl':null	};
+	CardTypes['RD']		= {	'Label':"Red Dragon",	'ImageUrl':CardImageUrl('1/1b/MJd1')	};
+	CardTypes['GD']		= {	'Label':"Green Dragon",	'ImageUrl':CardImageUrl('c/c4/MJd2')		};
+	CardTypes['WD']		= {	'Label':"White Dragon",	'ImageUrl':CardImageUrl('5/5a/MJd3')		};
+	CardTypes['WW']		= {	'Label':"West Wind",	'ImageUrl':CardImageUrl('1/1b/MJf3')	};
+	CardTypes['EW']		= {	'Label':"East Wind",	'ImageUrl':CardImageUrl('1/1b/MJf1')	};
+	CardTypes['NW']		= {	'Label':"North Wind",	'ImageUrl':CardImageUrl('1/1b/MJf4')	};
+	CardTypes['SW']		= {	'Label':"South Wind",	'ImageUrl':CardImageUrl('1/1b/MJf3')	};
+	CardTypes['B1']		= {	'Label':"Bamboo 1",		'ImageUrl':CardImageUrl('3/37/MJs1')		};
+	CardTypes['B2']		= {	'Label':"Bamboo 2",		'ImageUrl':CardImageUrl('5/5e/MJs2')		};
+	CardTypes['B3']		= {	'Label':"Bamboo 3",		'ImageUrl':CardImageUrl('a/a7/MJs3')		};
+	CardTypes['B4']		= {	'Label':"Bamboo 4",		'ImageUrl':CardImageUrl('1/1b/MJs4')		};
+	CardTypes['B5']		= {	'Label':"Bamboo 5",		'ImageUrl':CardImageUrl('1/1b/MJs5')		};
+	CardTypes['B6']		= {	'Label':"Bamboo 6",		'ImageUrl':CardImageUrl('1/1b/MJs6')		};
+	CardTypes['B7']		= {	'Label':"Bamboo 7",		'ImageUrl':CardImageUrl('1/1b/MJs7')		};
+	CardTypes['B8']		= {	'Label':"Bamboo 8",		'ImageUrl':CardImageUrl('1/1b/MJs8')		};
+	CardTypes['B9']		= {	'Label':"Bamboo 9",		'ImageUrl':CardImageUrl('1/1b/MJs9')		};
+	CardTypes['D1']		= {	'Label':"Dots 1",		'ImageUrl':CardImageUrl('1/1b/MJt1')	};
+	CardTypes['D2']		= {	'Label':"Dots 2",		'ImageUrl':CardImageUrl('1/1b/MJt2')		};
+	CardTypes['D3']		= {	'Label':"Dots 3",		'ImageUrl':CardImageUrl('1/1b/MJt3')		};
+	CardTypes['D4']		= {	'Label':"Dots 4",		'ImageUrl':CardImageUrl('1/1b/MJt4')		};
+	CardTypes['D5']		= {	'Label':"Dots 5",		'ImageUrl':CardImageUrl('1/1b/MJt5')		};
+	CardTypes['D6']		= {	'Label':"Dots 6",		'ImageUrl':CardImageUrl('1/1b/MJt6')		};
+	CardTypes['D7']		= {	'Label':"Dots 7",		'ImageUrl':CardImageUrl('1/1b/MJt7')		};
+	CardTypes['D8']		= {	'Label':"Dots 8",		'ImageUrl':CardImageUrl('1/1b/MJt8')		};
+	CardTypes['D9']		= {	'Label':"Dots 9",		'ImageUrl':CardImageUrl('1/1b/MJt9')		};
+	CardTypes['C1']		= {	'Label':"Character 1",	'ImageUrl':CardImageUrl('1/1c/MJw1')	};
+	CardTypes['C2']		= {	'Label':"Character 2",	'ImageUrl':CardImageUrl('c/c3/MJw2')	};
+	CardTypes['C3']		= {	'Label':"Character 3",	'ImageUrl':CardImageUrl('9/9e/MJw3')	};
+	CardTypes['C4']		= {	'Label':"Character 4",	'ImageUrl':CardImageUrl('1/1b/MJw4')	};
+	CardTypes['C5']		= {	'Label':"Character 5",	'ImageUrl':CardImageUrl('1/1b/MJw5')	};
+	CardTypes['C6']		= {	'Label':"Character 6",	'ImageUrl':CardImageUrl('1/1b/MJw6')	};
+	CardTypes['C7']		= {	'Label':"Character 7",	'ImageUrl':CardImageUrl('1/1b/MJw7')	};
+	CardTypes['C8']		= {	'Label':"Character 8",	'ImageUrl':CardImageUrl('1/1b/MJw8')	};
+	CardTypes['C9']		= {	'Label':"Character 9",	'ImageUrl':CardImageUrl('1/1b/MJw9')	};
+
+	//	magic codes
+	//	S = suit card
+	//	A = any card
+	//	H = honour card
+	//	_x2	= pair
+	//	_x3 = pung/3 of a kind
+	//	_x4 = kong/4 of a kind
+	var AllScoringHands =
+	[
+	 "Big Three Dragons, gdx3 rdx3 wdx3",
+	 "Jade Dragon, GDx3 Bx3 Bx3 Bx3",
+	 "Ruby Dragon, RDx3 Bx3 Cx3 Cx3",
+	 "Pearl Dragon, WDx3 dx3 dx3 dx3 dx2",
+	 "Seven Pairs, Sx2 Sx2 Sx2 Sx2",
+	 ];
+
+	function THand(Name,OnChanged)
+	{
+		this.Name = Name;
+		this.Cards = [];
+		this.OnChanged = (OnChanged === undefined) ? function(){} : OnChanged;
+		this.Add = function (Type)
+		{
+			this.Cards.push( Type );
+			this.OnChanged( this );
+		}
+	}
+
+	function UpdatePlayersHandElement()
+	{
+		UpdateHandElement( PlayersHand, GetPlayersHandElement() );
+	}
+
+	function UpdateHandElement(Hand,HandElement)
+	{
+		//	clear existing
+		var RemoveCardElement = function(CardElement)
+		{
+			HandElement.removeChild( CardElement );
+		};
+		HandElement.CardElements.forEach( RemoveCardElement );
+		HandElement.CardElements = [];
+		
+		HandElement.NameElement.innerText = Hand.Name;
+		
+		var AddCard = function(TypeName)
+		{
+			var CardElement = MakeCardElement( TypeName, HandElement );
+			HandElement.CardElements.push( CardElement );
+		};
+		
+		Hand.Cards.forEach( AddCard );
+	}
+
+	function GetPlayersHandElement()
+	{
+		return PlayersHandElement;
+	}
+
+	function GetPlayersHandParentElement()
+	{
+		return document.getElementById('Player');
+	}
+
+	function GetCardTypesAndMultFromTypename(TypeName)
+	{
+		console.log(TypeName);
+		var Result = {	'Types':[],	'Mult':1	};
+		if ( !TypeName.includes('X') )
+		{
+			Result.Types.push( CardTypes[TypeName] );
+			return Result;
+		}
+			
+		var Parts = TypeName.split('X');
+		var Prefix = Parts[0];
+		var Default_SuitIndex = 9;
+		Result.Mult = Parts[1];
+		
+		//	any suit
+		if ( Prefix == 'S' )
+		{
+			Result.Types.push( CardTypes['D'+Default_SuitIndex] );
+			Result.Types.push( CardTypes['B'+Default_SuitIndex] );
+			Result.Types.push( CardTypes['C'+Default_SuitIndex] );
+			return Result;
+		}
+		
+		if ( ['D','C','B'].includes(Prefix) )
+		{
+			Result.Types.push( CardTypes[Prefix+Default_SuitIndex] );
+			return Result;
+		}
+		
+		Result.Types.push( CardTypes[Prefix] );
+		return Result;
+	}
+
+	function MakeCardElement(TypeName,Parent,OnClick)
+	{
+		var TypesAndMult = GetCardTypesAndMultFromTypename(TypeName);
+		var Types = TypesAndMult.Types;
+		var Mult = TypesAndMult.Mult;
+		
+		var Card = document.createElement('div');
+		Card.className = 'Card';
+		
+		var AddTypeImage = function(Type)
+		{
+			if ( Type.ImageUrl != null )
+			{
+				var ImageElement = document.createElement('img');
+				ImageElement.src = Type.ImageUrl;
+				Card.appendChild( ImageElement );
+			}
+		};
+		for ( var m=0;	m<Mult;	m++ )
+			Types.forEach( AddTypeImage );
+		
+		//Card.appendChild( document.createTextNode(Type.Label) );
+		if ( Mult != 1 )
+			Card.appendChild( document.createTextNode("x"+Mult) );
+
+		Parent.appendChild( Card );
+		return Card;
+	}
+
+	function MakeHandElement(Hand,Parent)
+	{
+		var HandElement = document.createElement('div');
+		HandElement.className = 'Hand';
+		HandElement.CardElements = [];
+		
+		var NameElement = document.createElement('div');
+		NameElement.className = 'HandName';
+		NameElement.innerText = Hand.Name;
+		HandElement.appendChild( NameElement );
+		HandElement.NameElement = NameElement;
+		
+		UpdateHandElement( Hand, HandElement );
+		
+		Parent.appendChild( HandElement );
+		return HandElement;
+	}
+
+	function GetCardsFromHandString(HandString)
+	{
+		var NameAndCards = HandString.split(', ');
+		var Cards = NameAndCards[1].split(' ');
+		return Cards;
+	}
+
+	function LoadHand(Hand,HandString)
+	{
+		var NameAndCards = HandString.split(', ');
+		Hand.Name = NameAndCards[0];
+		
+		var Cards = GetCardsFromHandString(HandString);
+		var AddCard = function(CardType)
+		{
+			CardType = CardType.toUpperCase();
+			Hand.Add(CardType);
+		};
+		Cards.forEach( AddCard );
+		
+		Hand.OnChanged( Hand );
+	}
+
+	function ExpandMagicCard(Card)
+	{
+		var Expandx3 = function(Card)	{	return [Card,Card,Card];	};
+		var D1x3 = Expandx3('D1');
+		var D2x3 = Expandx3('D2');
+		var D3x3 = Expandx3('D3');
+		var D4x3 = Expandx3('D4');
+		var D5x3 = Expandx3('D5');
+		
+		if ( Card == 'DX3' )	return [ D1x3,D2x3,D3x3,D4x3,D5x3,D6x3,D7x3,D8x3,D9x3];
+		if ( Card == 'CX3' )	return [ C1x3,C2x3,C3x3,C4x3,C5x3,C6x3,C7x3,C8x3,C9x3];
+		if ( Card == 'BX3' )	return [ B1x3,B2x3,B3x3,B4x3,B5x3,B6x3,B7x3,B8x3,B9x3];
+		
+		//	not a magic
+		return [[Card]];
+	}
+
+
+	function Init()
+	{
+		PlayersHandElement = MakeHandElement( PlayersHand, GetPlayersHandParentElement() );
+		LoadHand( PlayersHand, "Hello, RD RD GD B1" );
+		
+		//	make all the different hands
+		var MakeScoringHand = function(HandString)
+		{
+			var MatchesElement = document.getElementById('Matches');
+			var ScoringHand = new THand('ScoringHand');
+			var ScoringHandElement = MakeHandElement( ScoringHand, MatchesElement );
+			var UpdateScoringHand = function( Hand )
+			{
+				UpdateHandElement( Hand, ScoringHandElement );
+			};
+			ScoringHand.OnChanged = UpdateScoringHand;
+			LoadHand( ScoringHand, HandString );
+			ScoringHands.push( ScoringHand );
+		};
+
+		AllScoringHands.forEach( MakeScoringHand );
+	}
+
+	var PlayersHand = new THand( 'Player', UpdatePlayersHandElement );
+	var PlayersHandElement = null;
+	var ScoringHands = [];
+	
+	Init();
+
+</script>
+
+</body>
+</html>
+
